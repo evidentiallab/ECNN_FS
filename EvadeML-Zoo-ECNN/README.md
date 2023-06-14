@@ -6,7 +6,7 @@ The goal of this project:
 * Existing attacking methods: FGSM, BIM, JSMA, Deepfool, Universal Perturbations, Carlini/Wagner-L2/Li/L0 and more. [[See details]](attacks/README.md).
 * Visualization of adversarial examples.
 * Existing defense methods as baseline.
-
+* ok
 The code was developed on Python 2, but should be runnable on Python 3 with tiny modifications.
 
 > Please follow [the instructions](Reproduce_FeatureSqueezing.md) to reproduce the _**Feature Squeezing**_ results.
