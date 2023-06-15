@@ -72,7 +72,7 @@ def main(argv=None):
             img_size = 299
         else:
             img_size = 224
-        X_test_all, Y_test_all = dataset.get_test_data(img_size, 0, 200)
+        X_test_all, Y_test_all = dataset.get_test_data(img_size, 0, 200) #XU:为什么要取0-200的图片，Imagenet 这样取，其他的数据集取所有的
     else:
         X_test_all, Y_test_all = dataset.get_test_dataset()
 
@@ -96,9 +96,9 @@ def main(argv=None):
     # 3. Evaluate the trained model.
     # TODO: add top-5 accuracy for ImageNet.
     print ("Evaluating the pre-trained model...")
-    Y_pred_all = model.predict(X_test_all)
-    mean_conf_all = calculate_mean_confidence(Y_pred_all, Y_test_all)
-    accuracy_all = calculate_accuracy(Y_pred_all, Y_test_all)
+    Y_pred_all = model.predict(X_test_all)  #XU：举例：拿10分类来说，就是 10 类的概率值
+    mean_conf_all = calculate_mean_confidence(Y_pred_all, Y_test_all) #XU：得出的值就是表 1 的 TOP-1 Mean Confidence
+    accuracy_all = calculate_accuracy(Y_pred_all, Y_test_all) #XU：得出的值就是表 1 的 TOP-1 Accuracy
     print('Test accuracy on raw legitimate examples %.4f' % (accuracy_all))
     print('Mean confidence on ground truth classes %.4f' % (mean_conf_all))
 
@@ -130,8 +130,9 @@ def main(argv=None):
     print ( "Selected %d examples." % len(selected_idx))
     print ( "Selected index in test set (sorted): %s" % selected_example_idx_ranges )
     X_test, Y_test, Y_pred = X_test_all[selected_idx], Y_test_all[selected_idx], Y_pred_all[selected_idx]
-# X_test 100个cnn预测正确的样本
-# Y_test 是onehot后的label
+    # X_test 100个cnn预测正确的样本
+    # Y_test 是onehot后的label
+
     # The accuracy should be 100%.不是实验结论，验证选择样本是否都是cnn正确识别
     accuracy_selected = calculate_accuracy(Y_pred, Y_test)
     mean_conf_selected = calculate_mean_confidence(Y_pred, Y_test)
