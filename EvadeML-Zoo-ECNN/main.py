@@ -73,6 +73,7 @@ def main(argv=None):
         else:
             img_size = 224
         X_test_all, Y_test_all = dataset.get_test_data(img_size, 0, 200) #XU:为什么要取0-200的图片，Imagenet 这样取，其他的数据集取所有的
+        #XU：X_test_all 是样本像素值，是二维矩阵，行中的值是一个样本的所有像素，行数是样本数；Y_test_all的行是一个样本的 one-hot 值，行数是样本数
     else:
         X_test_all, Y_test_all = dataset.get_test_dataset()
 
@@ -109,7 +110,7 @@ def main(argv=None):
 
     if FLAGS.select:
         # Filter out the misclassified examples.
-        correct_idx = get_correct_prediction_idx(Y_pred_all, Y_test_all)
+        correct_idx = get_correct_prediction_idx(Y_pred_all, Y_test_all) #XU:正确分类的样本的index
         if FLAGS.test_mode:
             # Only select the first example of each class.
             correct_and_selected_idx = get_first_n_examples_id_each_class(Y_test_all[correct_idx])
@@ -118,8 +119,8 @@ def main(argv=None):
             if not FLAGS.balance_sampling:
                 selected_idx = correct_idx[:FLAGS.nb_examples]
             else:
-                # select the same number of examples for each class label.
-                nb_examples_per_class = int(FLAGS.nb_examples / Y_test_all.shape[1])
+                # select the same number of examples for each class label. #从每一个类中选相同数量的样本。
+                nb_examples_per_class = int(FLAGS.nb_examples / Y_test_all.shape[1]) #FLAGS.nb_examples是用户输入的，意思是一共选用的样本数，Y_test_all.shape[1]表示的是类别数，nb_examples_per_class指每个类别的样本数
                 correct_and_selected_idx = get_first_n_examples_id_each_class(Y_test_all[correct_idx], n=nb_examples_per_class)
                 selected_idx = [ correct_idx[i] for i in correct_and_selected_idx ]
     else:
@@ -130,7 +131,7 @@ def main(argv=None):
     print ( "Selected %d examples." % len(selected_idx))
     print ( "Selected index in test set (sorted): %s" % selected_example_idx_ranges )
     X_test, Y_test, Y_pred = X_test_all[selected_idx], Y_test_all[selected_idx], Y_pred_all[selected_idx]
-    # X_test 100个cnn预测正确的样本
+    # X_test cnn预测正确的100个样本
     # Y_test 是onehot后的label
 
     # The accuracy should be 100%.不是实验结论，验证选择样本是否都是cnn正确识别
@@ -171,7 +172,7 @@ def main(argv=None):
     sample_string_hash = task['test_set_selected_idx_hash'][:5]
 
     from datasets.datasets_utils import get_next_class, get_least_likely_class
-    Y_test_target_next = get_next_class(Y_test)
+    Y_test_target_next = get_next_class(Y_test)  #XU：对于 targeted attack 有两种不同的 targets，一种是 the Next class，一种是least-likely class
     Y_test_target_ll = get_least_likely_class(Y_pred)
 
     X_test_adv_list = []
@@ -181,6 +182,7 @@ def main(argv=None):
     attack_string_list = filter(lambda x:len(x)>0, FLAGS.attacks.lower().split(';'))
     to_csv = []
 
+    #XU：创建文件夹，保存什么的？
     X_adv_cache_folder = os.path.join(FLAGS.result_folder, 'adv_examples')
     adv_log_folder = os.path.join(FLAGS.result_folder, 'adv_logs')
     predictions_folder = os.path.join(FLAGS.result_folder, 'predictions')
@@ -188,11 +190,11 @@ def main(argv=None):
         if not os.path.isdir(folder):
             os.makedirs(folder)
 
-    predictions_fpath = os.path.join(predictions_folder, "legitimate.npy")
+    predictions_fpath = os.path.join(predictions_folder, "legitimate.npy") #XU：100 个样本的置信度
     np.save(predictions_fpath, Y_pred, allow_pickle=False)
-
+    #FLAGS.clip：L-infinity clip on the adversarial perturbations.
     if FLAGS.clip >= 0:
-        epsilon = FLAGS.clip
+        epsilon = FLAGS.clip #：epsilon是扰动的大小
         print ("Clip the adversarial perturbations by +-%f" % epsilon)
         max_clip = np.clip(X_test + epsilon, 0, 1)
         min_clip = np.clip(X_test - epsilon, 0, 1)
@@ -239,14 +241,14 @@ def main(argv=None):
         # 5.0 Output predictions.
         Y_test_adv_pred = model.predict(X_test_adv) # x_test_adv 被攻击的100个样本
         predictions_fpath = os.path.join(predictions_folder, "%s.npy"% attack_string) #"%s.npy"% attack_string这个文件存储的是x_test_adv的100个样本中每个样本的10个置信度
-        np.save(predictions_fpath, Y_test_adv_pred, allow_pickle=False)
+        np.save(predictions_fpath, Y_test_adv_pred, allow_pickle=False)#为后面做差值，计算距离做准备
 
         # 5.1 Evaluate the adversarial examples being discretized to uint8.
         print ("\n---Attack (uint8): %s" % attack_string)
         # All data should be discretized to uint8.
         X_test_adv_discret = reduce_precision_py(X_test_adv, 256)#将X_test_adv从0-1转化成0-255
-        X_test_adv_discretized_list.append(X_test_adv_discret)
-        Y_test_adv_discret_pred = model.predict(X_test_adv_discret)
+        X_test_adv_discretized_list.append(X_test_adv_discret)#X_test_adv_discretized_list存储所有的攻击样本
+        Y_test_adv_discret_pred = model.predict(X_test_adv_discret)#Y_test_adv_discret_pred计算所有对攻击样本的预测值(10个置信度)
         Y_test_adv_discretized_pred_list.append(Y_test_adv_discret_pred)
 
         #计算攻击成功率，rec就是表二
@@ -285,7 +287,7 @@ def main(argv=None):
 
         # TODO: output the prediction and confidence for each example, both legitimate and adversarial.
 
-
+    # 表三鲁棒性在这里获得
     # 6. Evaluate robust classification techniques.
     # Example: --robustness \
     #           "Base;FeatureSqueezing?squeezer=bit_depth_1;FeatureSqueezing?squeezer=median_filter_2;"
@@ -297,6 +299,7 @@ def main(argv=None):
         from robustness import evaluate_robustness
         result_folder_robustness = os.path.join(FLAGS.result_folder, "robustness")
         fname_prefix = "%s_%s_robustness" % (task_id, attack_string_hash)
+        #FLAGS.robustness：flags.DEFINE_string('robustness', '', 'Supported: FeatureSqueezing.')
         evaluate_robustness(FLAGS.robustness, model, Y_test_all, X_test_all, Y_test, \
                 attack_string_list, X_test_adv_discretized_list, 
                 fname_prefix, selected_idx_vis, result_folder_robustness)

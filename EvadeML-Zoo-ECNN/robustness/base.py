@@ -53,6 +53,7 @@ def evaluate_robustness(params_str, model, Y, X, Y_adv, attack_string_list, X_ad
         accuracy_rec = {}
         accuracy_rec['RobustClassifier'] = RC_name
 
+        #表三 有 fs 的 legitimate
         accuracy = calculate_accuracy(rc.predict(X), Y)
         accuracy_rec['legitimate_%d' % len(X)] = accuracy
 
@@ -62,13 +63,17 @@ def evaluate_robustness(params_str, model, Y, X, Y_adv, attack_string_list, X_ad
         for i, attack_name in enumerate(attack_string_list):
             X_adv = X_adv_list[i]
             if hasattr(rc, 'visualize_and_predict'):
-                X_adv_filtered, Y_pred_adv = rc.visualize_and_predict(X_adv)
+                X_adv_filtered, Y_pred_adv = rc.visualize_and_predict(X_adv) #X_Filtered是压缩后的图像，在论文中是图3的 2 3行
                 rows += map(lambda x:x[selected_idx_vis], [X_adv, X_adv_filtered])
             else:
                 Y_pred_adv = rc.predict(X_adv)
+
+            #表3 攻击样本被压缩后放进cnn后的accuracy
             accuracy = calculate_accuracy(Y_pred_adv, Y_adv)
             accuracy_rec[attack_name] = accuracy        
 
+
+        #表 3  92% ------
         accuracy_rows.append(accuracy_rec)
 
         # Visualize the filtered images.

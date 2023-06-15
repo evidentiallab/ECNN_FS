@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+#sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath("/Users/leo/lab/ECNN_FS/ECNN_FS/EvadeML-Zoo-ECNN/"))))
 
 from utils.squeeze import get_squeezer_by_name
 from utils.parameter_parser import parse_params
@@ -40,4 +40,4 @@ class FeatureSqueezingRC:
     def visualize_and_predict(self, X):
         X_filtered = self.filter(X)
         Y_pred = self.model_predict(X_filtered)
-        return X_filtered, Y_pred
+        return X_filtered, Y_pred #X_Filtered是压缩后的图像，在论文中是图3的 2 3行

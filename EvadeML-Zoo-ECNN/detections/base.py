@@ -84,12 +84,12 @@ class DetectionEvaluator:
         for i,attack_name in enumerate(attack_names):
             self.attack_name_id[attack_name] = i+1
 
-        X_adv_all = np.concatenate(X_adv_list)
-        X_leg_all = X[:len(X_adv_all)]
+        X_adv_all = np.concatenate(X_adv_list)  #X_adv_list 是所有攻击方法得到的对抗样本
+        X_leg_all = X[:len(X_adv_all)]  #X_leg_all取与X_adv_all相同数量的正常样本
 
-        self.X_detect = X_detect = np.concatenate([X_leg_all, X_adv_all])
+        self.X_detect = X_detect = np.concatenate([X_leg_all, X_adv_all]) #将对抗样本和正常样本混合
         # TODO: this could be wrong in non-default data selection mode.
-        Y_label_adv = Y_label[selected_idx]
+        Y_label_adv = Y_label[selected_idx] #Y-Label指的是样本被攻击前的正确的 label
 
         detection_db_path = os.path.join(self.task_dir, "detection_db_%s_clip_%s.json" % (attack_string_hash, clip))
 
@@ -107,13 +107,14 @@ class DetectionEvaluator:
         train_ratio = 0.5
         train_idx = random.sample(range(length), int(train_ratio*length))
         train_test_seq = [1 if idx in train_idx else 0 for idx in range(length) ]
+        #这个注释有错误！！！！ 正常样本给标签为 1，对抗样本给标签为 0；（正常样本用于计算阈值：正常样本分别进入 cnn和 fs-cnn后求类别差的和的值为阈值，合理的假设对抗样本进行此操作后一般情况下会大于这个阈值。0 与 1 的作用是判断检测率）
 
         # 2. Tag the misclassified examples, both legitimate and adversarial.
         # TODO: Differentiate the successful examples between targeted and non-targeted.
-        misclassified_seq = list(np.argmax(Y_label[:len(X_leg_all)], axis=1) != np.argmax(Y_pred[:len(X_leg_all)], axis=1))
+        misclassified_seq = list(np.argmax(Y_label[:len(X_leg_all)], axis=1) != np.argmax(Y_pred[:len(X_leg_all)], axis=1))  #从cnn中选择的正确分类的正常样本在经过 fscnn 分类后又错误的样本
         for Y_adv_pred in Y_adv_pred_list:
             misclassified_seq_adv = list(np.argmax(Y_adv_pred, axis=1) != np.argmax(Y_label_adv, axis=1))
-            misclassified_seq += misclassified_seq_adv
+            misclassified_seq += misclassified_seq_adv #所有攻击方法的对抗样本被错分类的样本合集
 
         success_adv_seq = [False] * len(X_leg_all)
         for i, Y_adv_pred in enumerate(Y_adv_pred_list):
