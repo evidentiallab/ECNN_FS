@@ -108,7 +108,7 @@ class DetectionEvaluator:
         train_idx = random.sample(range(length), int(train_ratio*length))
         train_test_seq = [1 if idx in train_idx else 0 for idx in range(length) ]
         #这个注释有错误！！！！ 正常样本给标签为 1，对抗样本给标签为 0；（正常样本用于计算阈值：正常样本分别进入 cnn和 fs-cnn后求类别差的和的值为阈值，合理的假设对抗样本进行此操作后一般情况下会大于这个阈值。0 与 1 的作用是判断检测率）
-
+        #这个地方是分开训练集和测试集，训练集给标签为 1，测试集为0
         # 2. Tag the misclassified examples, both legitimate and adversarial.
         # TODO: Differentiate the successful examples between targeted and non-targeted.
         misclassified_seq = list(np.argmax(Y_label[:len(X_leg_all)], axis=1) != np.argmax(Y_pred[:len(X_leg_all)], axis=1))  #从cnn中选择的正确分类的正常样本在经过 fscnn 分类后又错误的样本
@@ -116,11 +116,13 @@ class DetectionEvaluator:
             misclassified_seq_adv = list(np.argmax(Y_adv_pred, axis=1) != np.argmax(Y_label_adv, axis=1))
             misclassified_seq += misclassified_seq_adv #所有攻击方法的对抗样本被错分类的样本合集
 
+        #攻击样本被正确分类的对比表
         success_adv_seq = [False] * len(X_leg_all)
         for i, Y_adv_pred in enumerate(Y_adv_pred_list):
             attack_name = attack_names[i]
             if 'targeted=ll' in attack_name:
                 success_adv_seq_attack = list(np.argmax(Y_adv_pred, axis=1) == np.argmax(Y_test_target_ll, axis=1))
+                #被正确识别，就是true，错误识别就是false
             elif 'targeted=next' in attack_name:
                 success_adv_seq_attack = list(np.argmax(Y_adv_pred, axis=1) == np.argmax(Y_test_target_next, axis=1))
             else:
@@ -131,10 +133,12 @@ class DetectionEvaluator:
 
 
         # 3. Tag the attack ID, 0 as legitimate.
+        #通过攻击方法来贴标签
         attack_id_seq = [0]*len(X_leg_all)
         for i,attack_name in enumerate(attack_names):
             attack_id_seq += [i+1]*len(X_adv_list[0])
 
+        #每一个样本有三个标签，是否是训练集，是否是被错误识别，是否被攻击（是被哪种攻击方式攻击）
         assert len(X_detect) == len(train_test_seq) == len(misclassified_seq) == len(attack_id_seq)
 
         self.db = TinyDB(detection_db_path)
@@ -250,6 +254,7 @@ class DetectionEvaluator:
             if detector is None:
                 print ("Skipped an unknown detector [%s]" % detector_name.split('?')[0])
                 continue
+            #通过训练集计算阈值
             detector.train(X_train, Y_train)
             Y_test_pred, Y_test_pred_score = detector.test(X_test)
 

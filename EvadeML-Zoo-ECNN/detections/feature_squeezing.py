@@ -178,7 +178,7 @@ class FeatureSqueezingDetector:
 
         normalize_func = self.get_normalizer_by_name(normalizer_name)
         input_to_normalized_output = lambda x: normalize_func(reshape_2d(self.eval_layer_output(x, layer_id)))
-
+        
         val_orig_norm = input_to_normalized_output(X1)
 
         if X2 is None:
@@ -251,6 +251,7 @@ class FeatureSqueezingDetector:
 
         distances = self.get_distance(X)
         threshold = self.threshold
+        #1是阳性，0是阴性
         Y_pred = distances > threshold
 
         return Y_pred, distances
