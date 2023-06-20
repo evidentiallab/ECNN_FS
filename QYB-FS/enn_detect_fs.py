@@ -187,7 +187,7 @@ def main(args):
         model_class_cnn = myCNNModel(mode='load', filename='cnn_{}.h5'.format(args.dataset))
         model_ecnn = model_class_ecnn.model
         model_cnn = model_class_cnn.model
-        sgd = optimizers.SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)
+        sgd = optimizers.SGD(lr=0.05, decay=1e-6, momentum=0.9, nesterov=True)  #XU：这里的 SGD 与 tongzhen 所用的优化器是否一致？？？
         model_ecnn.compile(loss=categorical_crossentropy, optimizer=sgd, metrics=['accuracy'])
         model_cnn.compile(loss=categorical_crossentropy, optimizer=sgd, metrics=['accuracy'])
 
@@ -222,6 +222,8 @@ def main(args):
 
     # Load the dataset
     X_train_all, Y_train_all, X_test_all, Y_test_all = model_class_cnn.x_train, model_class_cnn.y_train, model_class_cnn.x_test, model_class_cnn.y_test
+    #以MNIST为例，X_train_all 是1000张样本？？？？
+
     act_set=model_class_ecnn.act_set
     act_set = np.array(act_set)
     #print("x_train_all")
